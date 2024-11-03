@@ -7,7 +7,7 @@ project(libmprompt C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 14)
 
-option(MP_USE_C             "Build C versions of the library without exception support" OFF)
+option(MP_USE_C             "Build C versions of the library without exception support" ON)
 option(MP_DEBUG_UBSAN       "Build with undefined behaviour sanitizer" OFF)
 option(MP_DEBUG_ASAN        "Build with address sanitizer" OFF)
 

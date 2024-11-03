@@ -30,6 +30,8 @@
 // To save an allocation, we reserve `extra_size` space where the 
 // `mp_prompt_t` information will be.
 // All sizes (except for `extra_size`) are `os_page_size` aligned.
+// gstack-test: mp_gstack_s is defined in gstack.h instead.
+/*
 struct mp_gstack_s {
   mp_gstack_t*  next;               // used for the cache and delay list
   uint8_t*      full;               // stack reserved memory (including noaccess gaps)
@@ -41,6 +43,7 @@ struct mp_gstack_s {
   ssize_t       extra_size;         // size of extra allocated bytes.         
   uint8_t       extra[1];           // extra allocated (holds the mp_prompt_t structure)
 };
+*/
 
 
 
@@ -518,6 +521,18 @@ static void mp_gstack_thread_init(void) {
 }
 
 
+//---------------------------------------------------------------------------
+// test definition by zhengyi
+// prefix: zz
+//---------------------------------------------------------------------------
+
+mp_gstack_t *zz_gstack = NULL;
+void zz_init() {
+  if (zz_gstack != NULL) return;
+  zz_gstack = mp_gstack_alloc(0, NULL);
+}
+
+
 //----------------------------------------------------------------------------------
 // Support address sanitizer
 //----------------------------------------------------------------------------------
@@ -551,3 +566,4 @@ void mp_debug_asan_end_switch(bool from_system) {
 }
 
 #endif
+

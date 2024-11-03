@@ -27,6 +27,30 @@ void         mp_gsave_free(mp_gsave_t* gsave);
 
 mp_gstack_t* mp_gstack_current(void);             // implemented in <mprompt.c>
 
+// Stack info. 
+// For security we allocate this separately from the actual stack.
+// To save an allocation, we reserve `extra_size` space where the 
+// `mp_prompt_t` information will be.
+// All sizes (except for `extra_size`) are `os_page_size` aligned.
+struct mp_gstack_s {
+  mp_gstack_t*  next;               // used for the cache and delay list
+  uint8_t*      full;               // stack reserved memory (including noaccess gaps)
+  ssize_t       full_size;          // (for now always fixed to be `os_gstack_size`)
+  uint8_t*      stack;              // stack inside the full area (without gaps)
+  ssize_t       stack_size;         // actual available total stack size (includes reserved space) (depends on platform, but usually `os_gstack_size - 2*mp_gstack_gap`)
+  ssize_t       initial_commit;     // initial committed memory (usually `os_page_size`)  
+  ssize_t       committed;          // current committed estimate
+  ssize_t       extra_size;         // size of extra allocated bytes.         
+  uint8_t       extra[1];           // extra allocated (holds the mp_prompt_t structure)
+};
+
+//---------------------------------------------------------------------------
+// test definition by zhengyi
+// prefix: zz
+//---------------------------------------------------------------------------
+
+extern mp_gstack_t *zz_gstack;
+void zz_init();
 
 
 /*------------------------------------------------------------------------------

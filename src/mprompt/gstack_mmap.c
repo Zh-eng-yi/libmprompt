@@ -299,7 +299,7 @@ static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
   ssize_t available = 0;
   ssize_t stack_size = 0;
   mp_access_t access = MP_NOACCESS;
-  mp_gstack_t* g = mp_gstack_current();  
+  mp_gstack_t* g = mp_gstack_current();
   if (g != NULL) {
     // normally we only handle accesses in our current gstack
     access = mp_gstack_check_access(g, page, &stack_size, &available, NULL);
