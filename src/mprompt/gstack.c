@@ -227,12 +227,14 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
 
   // otherwise allocate fresh
   if (g == NULL) {
+    /*
     // allocate separately for security
     extra_size = mp_align_up(extra_size, sizeof(void*));    
     g = (mp_gstack_t*)mp_malloc(sizeof(mp_gstack_t) - 1 + extra_size); 
     if (g == NULL) {
       return NULL;
     }
+    */
 
     // allocate the actual stack
     uint8_t* stk;
@@ -243,7 +245,18 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
       mp_free(g);
       errno = ENOMEM;
       return NULL;
-    }    
+    }
+
+    extra_size = mp_align_up(extra_size, sizeof(void*));
+
+    // allocate header at address stack - 8 * page_size
+    uint8_t* page = stk - 8 * os_page_size;
+    // make the page readable and writable
+    if (!mp_os_mem_commit(page, os_page_size)) {
+      mp_gstack_os_free(full, stk, stk_size, initial_commit);
+      errno = ENOMEM;
+      return NULL;
+    }
     
     uint8_t* base = mp_base(stk, stk_size);
     mp_assert_internal((intptr_t)base % 32 == 0);
@@ -256,6 +269,7 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
     #endif
     
     //mp_trace_message("alloc gstack: full: %p, base: %p, base_limit: %p\n", full, base, mp_push(base, stk_size,NULL));
+    g = (mp_gstack_t *) page;
     g->next = NULL;
     g->full = full;
     g->full_size = os_gstack_size;
@@ -263,11 +277,15 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
     g->stack_size = stk_size;
     g->initial_commit = g->committed = initial_commit;
     g->extra_size = extra_size;
+
+    // make it only readable
+    mprotect(g, os_page_size, PROT_READ);
   }
 
-  if (extra != NULL && extra_size > 0) {
-    *extra = &g->extra[0];
-  }
+  // comment out since we don't use mprompt
+  // if (extra != NULL && extra_size > 0) {
+  //   *extra = &g->extra[0];
+  // }
   return g;
 }
 
@@ -529,7 +547,7 @@ static void mp_gstack_thread_init(void) {
 mp_gstack_t *zz_gstack = NULL;
 void zz_init() {
   if (zz_gstack != NULL) return;
-  zz_gstack = mp_gstack_alloc(0, NULL);
+  zz_gstack = mp_gstack_alloc(1, NULL);
 }
 
 
