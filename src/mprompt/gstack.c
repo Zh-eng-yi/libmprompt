@@ -279,7 +279,7 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
     g->extra_size = extra_size;
 
     // make it only readable
-    mprotect(g, os_page_size, PROT_READ);
+    // mprotect(g, os_page_size, PROT_READ);
   }
 
   // comment out since we don't use mprompt
