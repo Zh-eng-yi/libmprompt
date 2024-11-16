@@ -294,6 +294,7 @@ static struct sigaction mp_sig_bus_prev_act;
 static mp_decl_thread stack_t* mp_sig_stack;  // every thread needs a signal stack in order do demand commit stack pages
 
 static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
+  /* original logic
   // demand allocate?
   uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
   ssize_t available = 0;
@@ -333,6 +334,26 @@ static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
     mp_error_message(EINVAL,"stack overflow at %p\n", addr);  // abort?
   }
   
+  // not in one of our pools or error
+  return false;
+  */
+
+  // modified logic
+  // check if addr is in a gpool
+  uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
+  ssize_t stack_size = 0;
+  ssize_t available = 0;
+  mp_access_t access = MP_NOACCESS;
+  mp_gpool_t *gpool = 0;  // how to use this?
+  access = mp_gpools_check_access(page, &stack_size, &available, &gpool);
+  if (access == MP_ACCESS) {
+
+  }
+  else if (access == MP_NOACCESS_STACK_OVERFLOW) {
+    // stack overflow
+    mp_error_message(EINVAL,"stack overflow at %p\n", addr);  // abort?
+  }
+
   // not in one of our pools or error
   return false;
 }
