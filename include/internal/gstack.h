@@ -51,6 +51,8 @@ struct mp_gstack_s {
 
 extern mp_gstack_t *zz_gstack;
 void zz_init();
+typedef struct mp_gpool_s mp_gpool_t;
+mp_gpool_t* mp_gpool_first(void);
 
 
 /*------------------------------------------------------------------------------

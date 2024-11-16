@@ -294,7 +294,7 @@ static struct sigaction mp_sig_bus_prev_act;
 static mp_decl_thread stack_t* mp_sig_stack;  // every thread needs a signal stack in order do demand commit stack pages
 
 static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
-  /* original logic
+  // /* original logic
   // demand allocate?
   uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
   ssize_t available = 0;
@@ -336,9 +336,9 @@ static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
   
   // not in one of our pools or error
   return false;
-  */
+  // */
 
-  // modified logic
+  /* modified logic
   // check if addr is in a gpool
   uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
   ssize_t stack_size = 0;
@@ -356,6 +356,7 @@ static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
 
   // not in one of our pools or error
   return false;
+  */
 }
 
 static void mp_sig_handler_commit_on_demand(int signum, siginfo_t* info, void* arg) {
