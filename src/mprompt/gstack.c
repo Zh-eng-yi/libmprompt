@@ -422,7 +422,8 @@ static mp_access_t mp_gstack_check_access(mp_gstack_t* g, void* address, ssize_t
     if (commit_available != NULL) { *commit_available = mp_max(0, g->committed - used); }
     return MP_ACCESS;
   }
-  else if (p >= g->full && p < g->stack) {
+  // else if (p >= g->full && p < g->stack) {
+  else if (p >= (g->full + g->stack_size) && p < (g->full + g->full_size)) {
     // in the gap
     return MP_NOACCESS_STACK_OVERFLOW;
   }
