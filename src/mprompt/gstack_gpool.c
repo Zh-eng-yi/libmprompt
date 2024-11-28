@@ -211,10 +211,11 @@ static void mp_gpool_free(uint8_t* stk) {
 // Is a pointer located in a stack page and thus can be made accessible?
 // This routine is called from exception handler thread while debugging on macOS to verify
 // if the address is in one of our stacks and is allowed to be committed.
-static mp_access_t mp_gpools_check_access(void* p, ssize_t* stack_size, ssize_t* available, const mp_gpool_t** gpool) {
+static mp_access_t mp_gpools_check_access(void* p, ssize_t* stack_size, ssize_t* available, mp_gstack_t** g, const mp_gpool_t** gpool) {
   // for all pools
   if (available != NULL) *available = 0;
   if (stack_size != NULL) *stack_size = 0;
+  if (g != NULL) *g = NULL;
   if (gpool != NULL) *gpool = NULL;
   for (const mp_gpool_t* gp = mp_gpool_first(); gp != NULL; gp = mp_gpool_next(gp)) {
     ptrdiff_t ofs = (uint8_t*)p - (uint8_t*)gp;
@@ -232,6 +233,7 @@ static mp_access_t mp_gpools_check_access(void* p, ssize_t* stack_size, ssize_t*
         if (block_ofs < (gp->block_size - gp->gap_size)) {  // not in a gap?
           ssize_t avail = (os_stack_grows_down ? block_ofs : gp->block_size - gp->gap_size - block_ofs);
           if (available != NULL) *available = avail;
+          if (g != NULL) *g = (mp_gstack_t*)((uint8_t*)p - block_ofs + gp->block_size - gp->gap_size + 8 * os_page_size);
           if (gpool != NULL) *gpool = gp;
           return (avail == 0 ? MP_NOACCESS_STACK_OVERFLOW : MP_ACCESS);
         }

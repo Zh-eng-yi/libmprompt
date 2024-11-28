@@ -122,7 +122,7 @@ static mp_access_t  mp_gstack_check_access(mp_gstack_t* g, void* address, ssize_
 typedef struct mp_gpool_s mp_gpool_t;
 static uint8_t*     mp_gpool_alloc(uint8_t** stk, ssize_t* stk_size);
 static void         mp_gpool_free(uint8_t* stk);
-static mp_access_t  mp_gpools_check_access(void* address, ssize_t* available, ssize_t* stack_size, const mp_gpool_t** gp);
+static mp_access_t  mp_gpools_check_access(void* address, ssize_t* available, ssize_t* stack_size, mp_gstack_t** g, const mp_gpool_t** gp);
 
 
 // platform specific definitions are in included files
@@ -242,15 +242,14 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
     ssize_t  initial_commit;
     uint8_t* full = mp_gstack_os_alloc(&stk, &stk_size, &initial_commit);
     if (full == NULL) { 
-      mp_free(g);
       errno = ENOMEM;
       return NULL;
     }
 
     extra_size = mp_align_up(extra_size, sizeof(void*));
 
-    // allocate header at address stack - 8 * page_size
-    uint8_t* page = stk - 8 * os_page_size;
+    // allocate header in the gap at address stack base + 8 * page_size
+    uint8_t* page = stk + stk_size + 8 * os_page_size;
     // make the page readable and writable
     if (!mp_os_mem_commit(page, os_page_size)) {
       mp_gstack_os_free(full, stk, stk_size, initial_commit);
@@ -336,7 +335,7 @@ void mp_gstack_free(mp_gstack_t* g, bool delay) {
 
   // otherwise free it to the OS
   mp_gstack_os_free(g->full, g->stack, g->stack_size, g->committed);
-  mp_free(g);
+  // mp_free(g);
 }
 
 
@@ -348,7 +347,7 @@ void mp_gstack_clear_cache(void) {
     mp_gstack_t* next = _mp_gstack_cache = g->next;
     _mp_gstack_cache_count--;
     mp_gstack_os_free(g->full, g->stack, g->stack_size, g->committed);
-    mp_free(g);
+    // mp_free(g);
     g = next;
   }
   mp_assert_internal(_mp_gstack_cache == NULL);

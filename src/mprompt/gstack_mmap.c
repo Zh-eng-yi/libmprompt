@@ -294,27 +294,18 @@ static struct sigaction mp_sig_bus_prev_act;
 static mp_decl_thread stack_t* mp_sig_stack;  // every thread needs a signal stack in order do demand commit stack pages
 
 static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
-  // /* original logic
-  // demand allocate?
+  // check if addr is in a gpool
   uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
-  ssize_t available = 0;
   ssize_t stack_size = 0;
+  ssize_t available = 0;
   mp_access_t access = MP_NOACCESS;
-  mp_gstack_t* g = mp_gstack_current();
-  if (g != NULL) {
-    // normally we only handle accesses in our current gstack
-    access = mp_gstack_check_access(g, page, &stack_size, &available, NULL);
-  }
-  else if (addr_in_other_thread && os_use_gpools) {
-     // on mach (macOS) while debugging we use a separate mach exception thread handler
-     // in that case we can use gpools to determine if the access is in one of our gstacks.
-     access = mp_gpools_check_access( page, &stack_size, &available, NULL );
-  }
-  
+  mp_gstack_t *g = NULL;
+  access = mp_gpools_check_access(page, &stack_size, &available, &g, NULL);
   if (access == MP_ACCESS) {
     // a pointer to a valid gstack in our gpool, make the page read-write
     // mp_trace_message("  segv: unprotect page\n");
     // use quadratic growth; quite important for performance
+    // NB: we assume that the accessed gstack has been allocated
     ssize_t extra = 0;
     ssize_t used = stack_size - available;
     if (os_gstack_grow_fast && used > 0) { extra = 2*used; }   // doubling..
@@ -326,37 +317,20 @@ static bool mp_mmap_commit_on_demand(void* addr, bool addr_in_other_thread) {
     mp_push(page, extra, &commit_start);
     if (mprotect(commit_start, extra + os_page_size, PROT_READ | PROT_WRITE) == 0) {
       if (g != NULL) { g->committed = mp_unpush(commit_start, g->stack, g->stack_size ); }
-    };
+    }
     return true; 
   }
   else if (access == MP_NOACCESS_STACK_OVERFLOW) {
     // stack overflow
     mp_error_message(EINVAL,"stack overflow at %p\n", addr);  // abort?
   }
-  
-  // not in one of our pools or error
-  return false;
-  // */
-
-  /* modified logic
-  // check if addr is in a gpool
-  uint8_t* page = mp_align_down_ptr((uint8_t*)addr, os_page_size);
-  ssize_t stack_size = 0;
-  ssize_t available = 0;
-  mp_access_t access = MP_NOACCESS;
-  mp_gpool_t *gpool = 0;  // how to use this?
-  access = mp_gpools_check_access(page, &stack_size, &available, &gpool);
-  if (access == MP_ACCESS) {
-
-  }
-  else if (access == MP_NOACCESS_STACK_OVERFLOW) {
-    // stack overflow
+  else if (access == MP_ACCESS_META) {
+    // do not allow access in the first block
     mp_error_message(EINVAL,"stack overflow at %p\n", addr);  // abort?
   }
 
   // not in one of our pools or error
   return false;
-  */
 }
 
 static void mp_sig_handler_commit_on_demand(int signum, siginfo_t* info, void* arg) {
