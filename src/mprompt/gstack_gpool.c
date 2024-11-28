@@ -235,7 +235,7 @@ static mp_access_t mp_gpools_check_access(void* p, ssize_t* stack_size, ssize_t*
           if (available != NULL) *available = avail;
           if (g != NULL) *g = (mp_gstack_t*)((uint8_t*)p - block_ofs + gp->block_size - gp->gap_size + 8 * os_page_size);
           if (gpool != NULL) *gpool = gp;
-          return (avail == 0 ? MP_NOACCESS_STACK_OVERFLOW : MP_ACCESS);
+          return MP_ACCESS;
         }
         else {
           // stack overflow
