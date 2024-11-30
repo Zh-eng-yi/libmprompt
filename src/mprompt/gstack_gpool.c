@@ -71,8 +71,7 @@ typedef struct mp_gpool_s {
 static _Atomic(mp_gpool_t*)mp_gpools;
 
 // Walk the gpools
-// static mp_gpool_t* mp_gpool_first(void) {
-mp_gpool_t* mp_gpool_first(void) {
+static mp_gpool_t* mp_gpool_first(void) {
   return mp_atomic_load_ptr(mp_gpool_t, &mp_gpools);
 }
 

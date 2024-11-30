@@ -541,13 +541,19 @@ static void mp_gstack_thread_init(void) {
 
 //---------------------------------------------------------------------------
 // test definition by zhengyi
-// prefix: zz
 //---------------------------------------------------------------------------
 
-mp_gstack_t *zz_gstack = NULL;
+mp_gstack_t* zz_gstack = NULL;
 void zz_init() {
   if (zz_gstack != NULL) return;
   zz_gstack = mp_gstack_alloc(1, NULL);
+}
+
+mp_gstack_t* get_gstack(char* stack) {
+  ssize_t stack_size = 0;
+  ssize_t available = 0;
+  mp_gstack_t *g = NULL;
+  mp_gpools_check_access((void*) stack, &stack_size, &available, &g, NULL); 
 }
 
 

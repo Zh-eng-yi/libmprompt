@@ -46,14 +46,11 @@ struct mp_gstack_s {
 
 //---------------------------------------------------------------------------
 // test definition by zhengyi
-// prefix: zz
 //---------------------------------------------------------------------------
 
 extern mp_gstack_t *zz_gstack;
 void zz_init();
-typedef struct mp_gpool_s mp_gpool_t;
-mp_gpool_t* mp_gpool_first(void);
-
+mp_gstack_t *get_gstack(char *stack);
 
 /*------------------------------------------------------------------------------
   Support address sanitizer
