@@ -245,3 +245,20 @@ static mp_access_t mp_gpools_check_access(void* p, ssize_t* stack_size, ssize_t*
   }
   return MP_NOACCESS;
 }
+
+static mp_gstack_t* mp_gpools_get_gstack(void* p) {
+  for (const mp_gpool_t* gp = mp_gpool_first(); gp != NULL; gp = mp_gpool_next(gp)) {
+    ptrdiff_t ofs = (uint8_t*)p - (uint8_t*)gp;
+    if (ofs >= 0 && ofs < gp->size) {   // in the pool?
+      if (ofs <= (ptrdiff_t)sizeof(mp_gpool_t)) return NULL;  // in the start page
+      ptrdiff_t block_ofs = ofs % gp->block_size;
+      ssize_t stack_size = gp->block_size - gp->gap_size;
+      if (block_ofs <= stack_size) {  // p can point to the stack bottom or anywhere on the stack.
+        return (mp_gstack_t*)((uint8_t*)p - block_ofs + stack_size + 8 * os_page_size);
+      } else {
+        return NULL;
+      }
+    }
+  }
+  return NULL;
+}

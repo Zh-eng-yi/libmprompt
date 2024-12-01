@@ -48,9 +48,10 @@ struct mp_gstack_s {
 // test definition by zhengyi
 //---------------------------------------------------------------------------
 
-extern mp_gstack_t *zz_gstack;
+extern mp_gstack_t* zz_gstack;
 void zz_init();
-mp_gstack_t *get_gstack(char *stack);
+// get gstack from stack
+mp_gstack_t* mp_gstack_get(char* stack);
 
 /*------------------------------------------------------------------------------
   Support address sanitizer

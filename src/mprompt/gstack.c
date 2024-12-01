@@ -21,31 +21,7 @@
 #include <exception>
 #endif
 
-/*------------------------------------------------------------------------------
-   Growable stacklets
-------------------------------------------------------------------------------*/
-
-// Stack info. 
-// For security we allocate this separately from the actual stack.
-// To save an allocation, we reserve `extra_size` space where the 
-// `mp_prompt_t` information will be.
-// All sizes (except for `extra_size`) are `os_page_size` aligned.
-// gstack-test: mp_gstack_s is defined in gstack.h instead.
-/*
-struct mp_gstack_s {
-  mp_gstack_t*  next;               // used for the cache and delay list
-  uint8_t*      full;               // stack reserved memory (including noaccess gaps)
-  ssize_t       full_size;          // (for now always fixed to be `os_gstack_size`)
-  uint8_t*      stack;              // stack inside the full area (without gaps)
-  ssize_t       stack_size;         // actual available total stack size (includes reserved space) (depends on platform, but usually `os_gstack_size - 2*mp_gstack_gap`)
-  ssize_t       initial_commit;     // initial committed memory (usually `os_page_size`)  
-  ssize_t       committed;          // current committed estimate
-  ssize_t       extra_size;         // size of extra allocated bytes.         
-  uint8_t       extra[1];           // extra allocated (holds the mp_prompt_t structure)
-};
-*/
-
-
+// NB: mp_gstack_s and mp_gstack_t are defined in gstack.h
 
 //----------------------------------------------------------------------------------
 // Configuration
@@ -276,9 +252,6 @@ mp_gstack_t* mp_gstack_alloc(ssize_t extra_size, void** extra)
     g->stack_size = stk_size;
     g->initial_commit = g->committed = initial_commit;
     g->extra_size = extra_size;
-
-    // make it only readable
-    // mprotect(g, os_page_size, PROT_READ);
   }
 
   // comment out since we don't use mprompt
@@ -421,7 +394,6 @@ static mp_access_t mp_gstack_check_access(mp_gstack_t* g, void* address, ssize_t
     if (commit_available != NULL) { *commit_available = mp_max(0, g->committed - used); }
     return MP_ACCESS;
   }
-  // else if (p >= g->full && p < g->stack) {
   else if (p >= (g->full + g->stack_size) && p < (g->full + g->full_size)) {
     // in the gap
     return MP_NOACCESS_STACK_OVERFLOW;
@@ -549,11 +521,8 @@ void zz_init() {
   zz_gstack = mp_gstack_alloc(1, NULL);
 }
 
-mp_gstack_t* get_gstack(char* stack) {
-  ssize_t stack_size = 0;
-  ssize_t available = 0;
-  mp_gstack_t *g = NULL;
-  mp_gpools_check_access((void*) stack, &stack_size, &available, &g, NULL); 
+mp_gstack_t* mp_gstack_get(char* stack) {
+  return mp_gpools_get_gstack((void*) stack); 
 }
 
 
@@ -590,4 +559,3 @@ void mp_debug_asan_end_switch(bool from_system) {
 }
 
 #endif
-
