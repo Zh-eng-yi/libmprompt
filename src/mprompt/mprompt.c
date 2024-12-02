@@ -153,10 +153,10 @@ mp_prompt_t* mp_prompt_top(void) {
 
 // get the current gstack; used for on-demand-paging in gstack_mmap/gstack_win
 mp_gstack_t* mp_gstack_current(void) {
-  // mp_prompt_t* top = mp_prompt_top();
-  // return (top != NULL ? top->gstack : NULL);
-  if (zz_gstack == NULL) zz_gstack = mp_gstack_alloc(0, NULL);
-  return zz_gstack;
+  mp_prompt_t* top = mp_prompt_top();
+  return (top != NULL ? top->gstack : NULL);
+  // if (zz_gstack == NULL) zz_gstack = mp_gstack_alloc(0, NULL);
+  // return zz_gstack;
 }
 
 // walk the prompt chain; returns NULL when done.
@@ -767,4 +767,3 @@ void* win_test(mp_prompt_t* p, void* arg) {
   return NULL;
 }
 */
-

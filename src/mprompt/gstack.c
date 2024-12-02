@@ -522,7 +522,7 @@ void zz_init() {
 }
 
 mp_gstack_t* mp_gstack_get(char* stack) {
-  return mp_gpools_get_gstack((void*) stack); 
+  return mp_gpools_get_gstack((void*) stack);
 }
 
 
